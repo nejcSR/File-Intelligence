@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document Intelligence</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: #0f1117;
+            color: #e0e0e0;
+            min-height: 100vh;
+        }
+
+        header {
+            background: #1a1d2e;
+            padding: 20px 40px;
+            border-bottom: 1px solid #2a2d3e;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        header h1 { font-size: 1.4rem; color: #7c83fd; }
+
+        .container {
+            max-width: 1100px;
+            margin: 40px auto;
+            padding: 0 20px;
+        }
+
+        .upload-area {
+            background: #1a1d2e;
+            border: 2px dashed #2a2d3e;
+            border-radius: 12px;
+            padding: 60px;
+            text-align: center;
+            cursor: pointer;
+            transition: border-color 0.2s;
+            margin-bottom: 40px;
+        }
+
+        .upload-area:hover, .upload-area.dragover { border-color: #7c83fd; }
+        .upload-area input { display: none; }
+        .upload-area h2 { font-size: 1.2rem; margin-bottom: 8px; color: #fff; }
+        .upload-area p { color: #888; font-size: 0.9rem; margin-bottom: 20px; }
+
+        .btn {
+            background: #7c83fd;
+            color: #fff;
+            border: none;
+            padding: 10px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.95rem;
+            transition: background 0.2s;
+        }
+
+        .btn:hover { background: #6068f0; }
+        .btn:disabled { background: #444; cursor: not-allowed; }
+
+        .btn-delete {
+            background: transparent;
+            color: #f07070;
+            border: 1px solid #f07070;
+            padding: 5px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            transition: all 0.2s;
+        }
+
+        .btn-delete:hover { background: #f07070; color: #fff; }
+
+        .status-bar {
+            background: #1a1d2e;
+            border-radius: 8px;
+            padding: 14px 20px;
+            margin-bottom: 20px;
+            display: none;
+            align-items: center;
+            gap: 12px;
+            font-size: 0.9rem;
+        }
+
+        .spinner {
+            width: 18px;
+            height: 18px;
+            border: 2px solid #444;
+            border-top-color: #7c83fd;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            flex-shrink: 0;
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .progress-bar-wrap {
+            background: #0f1117;
+            border-radius: 8px;
+            height: 6px;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            background: #7c83fd;
+            border-radius: 8px;
+            transition: width 0.3s ease;
+            width: 0%;
+        }
+
+        .progress-label {
+            font-size: 0.85rem;
+            color: #888;
+            white-space: nowrap;
+        }
+
+        .result-card {
+            background: #1a1d2e;
+            border-radius: 12px;
+            padding: 28px;
+            margin-bottom: 20px;
+            border: 1px solid #2a2d3e;
+        }
+
+        .result-card h3 {
+            font-size: 1rem;
+            color: #7c83fd;
+            margin-bottom: 16px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.78rem;
+            font-weight: 600;
+            margin-right: 8px;
+        }
+
+        .badge-type { background: #2a2d3e; color: #7c83fd; }
+        .badge-high { background: #1a3a2a; color: #4caf82; }
+        .badge-medium { background: #3a3020; color: #f0b94a; }
+        .badge-low { background: #3a1a1a; color: #f07070; }
+
+        .field-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 12px;
+            margin-top: 12px;
+        }
+
+        .field-item {
+            background: #0f1117;
+            border-radius: 8px;
+            padding: 12px;
+        }
+
+        .field-item .label { font-size: 0.75rem; color: #888; margin-bottom: 4px; text-transform: uppercase; }
+        .field-item .value { font-size: 0.92rem; color: #e0e0e0; }
+
+        .anomaly-list { list-style: none; margin-top: 12px; }
+
+        .anomaly-list li {
+            background: #2a1a1a;
+            border-left: 3px solid #f07070;
+            padding: 10px 14px;
+            border-radius: 4px;
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+            color: #f0a0a0;
+        }
+
+        .no-anomalies { color: #4caf82; font-size: 0.9rem; margin-top: 12px; }
+        .summary-text { color: #bbb; font-size: 0.92rem; line-height: 1.6; margin-top: 8px; }
+
+        .divider { border: none; border-top: 1px solid #2a2d3e; margin: 40px 0; }
+
+        .dashboard-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .dashboard-header h2 { font-size: 1.1rem; color: #fff; }
+
+        table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+
+        th {
+            text-align: left;
+            padding: 10px 14px;
+            color: #888;
+            font-weight: 500;
+            border-bottom: 1px solid #2a2d3e;
+        }
+
+        td { padding: 12px 14px; border-bottom: 1px solid #1a1d2e; }
+        tr:hover td { background: #1a1d2e; }
+
+        .empty-state { text-align: center; padding: 60px; color: #555; }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>📄 Document Intelligence</h1>
+</header>
+
+<div class="container">
+
+    <div class="upload-area" id="uploadArea">
+        <h2>Drop documents here</h2>
+        <p>Supports PDF, PNG, JPG, JPEG, WEBP, GIF, JFIF, TXT — drop multiple files at once</p>
+        <input type="file" id="fileInput" accept=".pdf,.png,.jpg,.jpeg,.webp,.gif,.jfif,.docx,.txt" multiple>
+        <button class="btn" onclick="document.getElementById('fileInput').click()">Choose Files</button>
+    </div>
+
+    <div class="status-bar" id="statusBar">
+        <div class="spinner"></div>
+        <span id="statusText">Processing...</span>
+        <div class="progress-bar-wrap">
+            <div class="progress-bar-fill" id="progressFill"></div>
+        </div>
+        <span class="progress-label" id="progressLabel"></span>
+    </div>
+
+    <div id="resultContainer"></div>
+
+    <hr class="divider">
+
+    <div class="dashboard-header">
+        <h2>All Documents</h2>
+        <div style="display:flex; gap:10px;">
+            <a href="/export/csv" download>
+                <button class="btn" style="background:#2a2d3e; color:#7c83fd;">Export CSV</button>
+            </a>
+            <button class="btn" onclick="loadDocuments()">Refresh</button>
+            <button class="btn" style="background:#3a1a1a; color:#f07070; border: 1px solid #f07070;" onclick="deleteAllDocuments()">Delete All</button>
+        </div>
+    </div>
+
+    <div style="display:flex; gap:12px; margin-bottom:20px; flex-wrap:wrap;">
+        <input
+            id="searchInput"
+            type="text"
+            placeholder="Search filename..."
+            oninput="filterDocuments()"
+            style="background:#1a1d2e; border:1px solid #2a2d3e; color:#e0e0e0; padding:8px 14px; border-radius:8px; font-size:0.9rem; flex:1; min-width:180px; outline:none;"
+        >
+        <select id="typeFilter" onchange="filterDocuments()" style="background:#1a1d2e; border:1px solid #2a2d3e; color:#e0e0e0; padding:8px 14px; border-radius:8px; font-size:0.9rem; outline:none;">
+            <option value="">All Types</option>
+            <option value="invoice">Invoice</option>
+            <option value="contract">Contract</option>
+            <option value="resume">Resume</option>
+            <option value="unknown">Unknown</option>
+        </select>
+        <select id="confidenceFilter" onchange="filterDocuments()" style="background:#1a1d2e; border:1px solid #2a2d3e; color:#e0e0e0; padding:8px 14px; border-radius:8px; font-size:0.9rem; outline:none;">
+            <option value="">All Confidence</option>
+            <option value="high">High</option>
+            <option value="medium">Medium</option>
+            <option value="low">Low</option>
+        </select>
+    </div>
+
+    <div id="dashboard"></div>
+
+</div>
+
+<script>
+    let allDocuments = [];
+    const uploadArea = document.getElementById('uploadArea');
+    const fileInput = document.getElementById('fileInput');
+    const statusBar = document.getElementById('statusBar');
+    const statusText = document.getElementById('statusText');
+    const resultContainer = document.getElementById('resultContainer');
+    const progressFill = document.getElementById('progressFill');
+    const progressLabel = document.getElementById('progressLabel');
+
+    uploadArea.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        uploadArea.classList.add('dragover');
+    });
+
+    uploadArea.addEventListener('dragleave', () => uploadArea.classList.remove('dragover'));
+
+    uploadArea.addEventListener('drop', (e) => {
+        e.preventDefault();
+        uploadArea.classList.remove('dragover');
+        if (e.dataTransfer.files.length > 0) processFiles(e.dataTransfer.files);
+    });
+
+    fileInput.addEventListener('change', () => {
+        if (fileInput.files.length > 0) processFiles(fileInput.files);
+    });
+
+    async function processFiles(files) {
+        statusBar.style.display = 'flex';
+        statusText.textContent = `Uploading ${files.length} file(s)...`;
+        progressFill.style.width = '0%';
+        progressLabel.textContent = '';
+        resultContainer.innerHTML = '';
+
+        const formData = new FormData();
+        for (const file of files) {
+            formData.append('files', file);
+        }
+
+        try {
+            const res = await fetch('/upload', { method: 'POST', body: formData });
+            const data = await res.json();
+
+            if (!res.ok) throw new Error(data.detail || 'Upload failed');
+
+            const queued = data.filter(d => d.status === 'processing');
+            const rejected = data.filter(d => d.status === 'rejected');
+
+            if (rejected.length > 0) {
+                resultContainer.innerHTML = `<div class="result-card">
+                    <h3>Rejected Files</h3>
+                    <ul class="anomaly-list">
+                        ${rejected.map(r => `<li>${r.filename} — ${r.message}</li>`).join('')}
+                    </ul>
+                </div>`;
+            }
+
+            if (queued.length === 0) {
+                statusBar.style.display = 'none';
+                return;
+            }
+
+            statusText.textContent = `Processing ${queued.length} document(s)...`;
+            await pollBatch(queued.map(d => d.document_id));
+
+        } catch (err) {
+            resultContainer.innerHTML = `<div class="result-card"><p style="color:#f07070">Error: ${err.message}</p></div>`;
+            statusBar.style.display = 'none';
+        }
+    }
+
+    async function pollBatch(docIds) {
+        const total = docIds.length;
+        const maxAttempts = 40;
+        let attempts = 0;
+        let completed = new Set();
+
+        while (attempts < maxAttempts && completed.size < total) {
+            await new Promise(r => setTimeout(r, 2000));
+            attempts++;
+
+            for (const id of docIds) {
+                if (completed.has(id)) continue;
+                const res = await fetch(`/documents/${id}`);
+                const data = await res.json();
+                if (data.status === 'done' || data.status === 'failed') {
+                    completed.add(id);
+                }
+            }
+
+            const pct = Math.round((completed.size / total) * 100);
+            progressFill.style.width = `${pct}%`;
+            progressLabel.textContent = `${completed.size} of ${total} done`;
+            statusText.textContent = `Processing...`;
+        }
+
+        statusBar.style.display = 'none';
+        progressFill.style.width = '0%';
+        progressLabel.textContent = '';
+        loadDocuments();
+    }
+
+    function renderResult(data) {
+        const confidenceClass = `badge-${data.confidence || 'low'}`;
+        const fields = data.key_fields || {};
+        const anomalies = data.anomalies || [];
+
+        const fieldHTML = Object.entries(fields).map(([k, v]) => {
+            if (!v || (Array.isArray(v) && v.length === 0)) return '';
+            const display = Array.isArray(v) ? v.join(', ') : v;
+            return `<div class="field-item">
+                <div class="label">${k.replace(/_/g, ' ')}</div>
+                <div class="value">${display}</div>
+            </div>`;
+        }).join('');
+
+        const anomalyHTML = anomalies.length > 0
+            ? `<ul class="anomaly-list">${anomalies.map(a => `<li>${a}</li>`).join('')}</ul>`
+            : `<p class="no-anomalies">✓ No anomalies detected</p>`;
+
+        resultContainer.innerHTML = `
+            <div class="result-card">
+                <h3>Result</h3>
+                <span class="badge badge-type">${data.document_type || 'unknown'}</span>
+                <span class="badge ${confidenceClass}">Confidence: ${data.confidence || 'low'}</span>
+                <p class="summary-text">${data.summary || ''}</p>
+            </div>
+            ${fieldHTML ? `<div class="result-card"><h3>Extracted Fields</h3><div class="field-grid">${fieldHTML}</div></div>` : ''}
+            <div class="result-card"><h3>Anomalies</h3>${anomalyHTML}</div>
+        `;
+    }
+
+    async function deleteDocument(id) {
+        if (!confirm('Delete this document?')) return;
+        await fetch(`/documents/${id}`, { method: 'DELETE' });
+        loadDocuments();
+    }
+
+    async function deleteAllDocuments() {
+        if (!confirm('Are you absolutely sure you want to delete ALL documents? This cannot be undone.')) return;
+        
+        try {
+            const res = await fetch('/documents', { method: 'DELETE' });
+            const data = await res.json();
+            alert(data.message);
+            loadDocuments();
+        } catch (err) {
+            alert('Failed to delete all documents.');
+        }
+    }
+
+    async function loadDocuments() {
+        const res = await fetch('/documents');
+        allDocuments = await res.json();
+        filterDocuments();
+    }
+
+    function filterDocuments() {
+        const search = document.getElementById('searchInput').value.toLowerCase();
+        const type = document.getElementById('typeFilter').value.toLowerCase();
+        const confidence = document.getElementById('confidenceFilter').value.toLowerCase();
+        const dashboard = document.getElementById('dashboard');
+
+        const docsToFilter = Array.isArray(allDocuments) ? allDocuments : [];
+
+        const filtered = docsToFilter.filter(d => {
+            const matchSearch = (d.filename || '').toLowerCase().includes(search);
+            const matchType = type === '' || (d.document_type || '').toLowerCase() === type;
+            const matchConfidence = confidence === '' || (d.confidence || '').toLowerCase() === confidence;
+            return matchSearch && matchType && matchConfidence;
+        });
+
+        if (filtered.length === 0) {
+            dashboard.innerHTML = `<div class="empty-state">No documents match your filters.</div>`;
+            return;
+        }
+
+        dashboard.innerHTML = `
+            <table>
+                <thead>
+                    <tr>
+                        <th>Filename</th>
+                        <th>Type</th>
+                        <th>Status</th>
+                        <th>Confidence</th>
+                        <th>Anomalies</th>
+                        <th>Date</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${filtered.map(d => {
+                        const anomalyCount = Array.isArray(d.anomalies) ? d.anomalies.length : 0;
+                        return `
+                            <tr onclick="viewDocument(${d.id})">
+                                <td>${d.filename || ''}</td>
+                                <td><span class="badge badge-type">${d.document_type || '—'}</span></td>
+                                <td>${d.status || 'unknown'}</td>
+                                <td><span class="badge badge-${d.confidence || 'low'}">${d.confidence || '—'}</span></td>
+                                <td>${anomalyCount > 0 ? `⚠️ ${anomalyCount}` : '✓ None'}</td>
+                                <td>${d.upload_date ? new Date(d.upload_date).toLocaleDateString() : '—'}</td>
+                                <td><button class="btn-delete" onclick="event.stopPropagation(); deleteDocument(${d.id})">Delete</button></td>
+                            </tr>
+                        `;
+                    }).join('')}
+                </tbody>
+            </table>
+        `;
+    }
+
+    async function viewDocument(id) {
+        const res = await fetch(`/documents/${id}`);
+        const data = await res.json();
+        renderResult(data);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    loadDocuments();
+</script>
+</body>
+</html>

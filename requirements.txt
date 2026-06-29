@@ -1,0 +1,10 @@
+fastapi
+uvicorn
+sqlalchemy
+pdfplumber
+pytesseract
+pillow
+python-multipart
+groq
+python-dotenv
+python-docx
