@@ -4,6 +4,9 @@ An AI-powered document processing system that ingests invoices, contracts, resum
 
 Built as a portfolio project to demonstrate end-to-end system design: file parsing, OCR, AI-driven structured extraction, background task processing, and a clean review dashboard — not just a thin wrapper around an LLM API call.
 
+<img width="1920" height="917" alt="Docint1" src="https://github.com/user-attachments/assets/cd106c39-c1b8-4118-8758-c1a9922f6ce8" />
+
+
 ---
 
 ## What It Does
@@ -16,6 +19,8 @@ You drop in one or more documents. The system:
 4. Displays the results in a dashboard you can search, filter, export, or delete from
 
 It's the difference between pasting a document into a chat window once, and having a system that can process hundreds of documents reliably, consistently, and on its own schedule.
+
+<img width="1906" height="951" alt="Docint2" src="https://github.com/user-attachments/assets/347f3108-56e8-4b08-ac72-12ca8c6faf7c" />
 
 ---
 
@@ -67,6 +72,9 @@ It's the difference between pasting a document into a chat window once, and havi
 - **Document deletion** — remove individual documents or wipe everything at once
 - **Failure visibility** — if processing fails on a document, the actual error reason is stored and viewable, not just a generic "failed" status
 
+<img width="1920" height="935" alt="Docint5" src="https://github.com/user-attachments/assets/f48a539f-dc69-40ce-8358-132a713a0b09" />
+
+
 ---
 
 ## Running Locally
@@ -111,6 +119,9 @@ docker run -p 8000:8000 --env-file .env file-processor
 Visit `http://127.0.0.1:8000`.
 
 This is also how the project is deployed to Render — Render builds directly from the `Dockerfile` in this repo on every push.
+
+<img width="1900" height="941" alt="Docint3" src="https://github.com/user-attachments/assets/7599198f-ac57-43c3-b32d-8736b1cc6d13" />
+
 
 ---
 
